@@ -14,11 +14,11 @@ try:
     # 3. Поиск элементов и заполнение полей
     # Находим поле Full Name по его ID и вводим текст
     full_name_field = driver.find_element(By.ID, "userName")
-    full_name_field.send_keys("Иван Иванов")
+    full_name_field.send_keys("Кислов Максим Сергеевич")
 
     # Находим поле Email по его ID и вводим текст
     email_field = driver.find_element(By.ID, "userEmail")
-    email_field.send_keys("ivan@example.com")
+    email_field.send_keys("Kislov@mail.ru")
 
     # Находим кнопку Submit по ее ID и кликаем
     submit_button = driver.find_element(By.ID, "submit")
@@ -31,7 +31,7 @@ try:
     result_box = driver.find_element(By.ID, "output")
 
     # Проверяем, что в блоке результата появился введенный текст
-    assert "Иван Иванов" in result_box.text
+    assert "Кислов Максим Сергеевич" in result_box.text
     print("Тест успешно пройден!")
 
 finally:
