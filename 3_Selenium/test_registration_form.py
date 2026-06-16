@@ -3,6 +3,10 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
+
 class TestSuite:
     FIRST_NAME_LOCATOR          = (By.ID, "firstName")
     LAST_NAME_LOCATOR           = (By.ID, "lastName")
@@ -28,6 +32,12 @@ class TestSuite:
     def __init__(self):
         self.url = "https://qa-guru.github.io/one-page-form/automation-practice-form.html"
         self.driver = webdriver.Chrome()
+        self.fluent_wait = WebDriverWait(
+            self.driver,
+            timeout=10,
+            poll_frequency=0.5,
+            ignored_exceptions=[NoSuchElementException, StaleElementReferenceException]
+        )
 
     def set_up(self):
         driver = self.driver
@@ -87,8 +97,9 @@ class TestSuite:
         for element in value:
             email.click()  # Кликаем по почте
             subjects.click()
-            path = f"//div[@class='subjects-auto-complete__option' and text()='{element}']"
-            self.driver.find_element(By.XPATH, path).click()
+            xpath = f"//div[@class='subjects-auto-complete__option' and text()='{element}']"
+            self.fluent_wait.until(EC.visibility_of_element_located((By.XPATH, xpath))).click()
+            # self.driver.find_element(By.XPATH, xpath).click()
 
     def select_hobbies_sport(self):
         self.driver.find_element(*self.HOBBIES_SPORT_LOCATOR).click()
@@ -123,23 +134,26 @@ class TestSuite:
         select_city.click()
 
     def close_modal(self):
-        modal = self.driver.find_element(By.CSS_SELECTOR, "button[aria-label='Close']")
+        # modal = self.driver.find_element(By.CSS_SELECTOR, "button[aria-label='Close']")
+        modal = self.fluent_wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "button[aria-label='Close']")))
         modal.click()
 
     def scroll_to_the_end(self):
         self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
     def click_submit(self):
-        submit_button = self.driver.find_element(*self.SUBMIT_BUTTON_LOCATOR)
+        # submit_button = self.driver.find_element(*self.SUBMIT_BUTTON_LOCATOR)
+        submit_button = self.fluent_wait.until(EC.element_to_be_clickable(self.SUBMIT_BUTTON_LOCATOR))
         self.driver.execute_script("arguments[0].scrollIntoView();", submit_button)
         submit_button.click()
 
     def check_error(self):
         error = self.driver.find_element(*self.ERROR_LOCATOR)
-        assert error.text != "Please fill required fields and enter a valid 10-digit mobile number.", "Ошибка ввода, проверь обязательные поля!"
+        return error
 
     def find_result_table(self):
-        result_table = self.driver.find_element(*self.RESULT_TABLE_LOCATOR)
+        # result_table = self.driver.find_element(*self.RESULT_TABLE_LOCATOR)
+        result_table = self.fluent_wait.until(EC.visibility_of_element_located(self.RESULT_TABLE_LOCATOR))
         return result_table
 
     def close_result_table(self):
@@ -182,9 +196,11 @@ def positive_check():
         # test.scroll_to_the_end()
         test.select_state_and_city(state, city)
         test.click_submit()
-        test.check_error()
+        error = test.check_error()
         result_table = test.find_result_table()
         # print(result_table.text)
+        assert result_table.is_displayed()
+        assert error.text != "Please fill required fields and enter a valid 10-digit mobile number.", "Ошибка ввода, проверь обязательные поля!"
         assert first_name in result_table.text, f"Введенное значение '{first_name}' не найдено в Модальном окне"
         assert last_name in result_table.text, f"Введенное значение '{last_name}' не найдено в Модальном окне"
         assert email in result_table.text, f"Введенное значение '{last_name}' не найдено в Модальном окне"
